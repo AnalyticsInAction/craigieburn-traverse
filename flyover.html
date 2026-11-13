@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Craigieburn Range Traverse</title>
+<style>
+  :root{--bg:#0f141a;--ink:#eef2f5;--mut:#9fb0bf;--sat:#ff9a3c;--sun:#41b6ff;--warn:#ff5a4f;--esc:#ffd84a;--panel:rgba(12,17,23,.78)}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",system-ui,sans-serif;overflow:hidden}
+  #stage{position:relative;width:1280px;height:720px;overflow:hidden;background:#1a2430}
+  canvas{display:block}
+  #labels,#ovl{position:absolute;inset:0;pointer-events:none}
+  .lab{position:absolute;transform:translate(-50%,-100%);white-space:nowrap;font-size:14px;font-weight:600;color:#fff;text-shadow:0 1px 3px #000,0 0 6px #000;padding-bottom:6px}
+  .lab small{display:block;font-weight:400;font-size:12px;color:#dde6ee;text-align:center}
+  .lab.poi{font-size:15px;color:#ffe9a8}
+  .lab::after{content:"";position:absolute;left:50%;bottom:0;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:#fff;box-shadow:0 0 4px #000}
+  #cap{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);max-width:1080px;text-align:center;font-size:24px;line-height:1.3;
+       background:rgba(8,12,16,.72);padding:8px 18px;border-radius:8px}
+  #info{position:absolute;left:24px;top:22px;background:var(--panel);border-radius:10px;padding:12px 16px;min-width:270px;border-left:5px solid var(--sat)}
+  #info .day{font-size:13px;letter-spacing:.12em;color:var(--mut)}
+  #info .leg{font-size:21px;font-weight:700;margin:3px 0 6px}
+  #info .st{font-size:15px;color:#d8e2ea}
+  #info .live{margin-top:8px;font-size:14px;color:var(--mut)}
+  #info .live b{color:#fff;font-size:18px}
+  #prof{position:absolute;right:24px;top:22px;width:400px;height:120px;background:var(--panel);border-radius:10px}
+  #compass{position:absolute;right:440px;top:30px;width:44px;height:44px}
+  .card{position:absolute;background:var(--panel);border-radius:14px;padding:22px 26px;box-sizing:border-box}
+  .card h2{margin:0 0 6px;font-size:30px}
+  .card h3{margin:0 0 10px;font-size:15px;letter-spacing:.14em;color:var(--mut);font-weight:600}
+  .row{display:flex;gap:14px;margin:8px 0;font-size:19px;align-items:baseline}
+  .row .k{color:var(--mut);width:150px;flex:none;font-size:16px}
+  .src{position:absolute;left:24px;bottom:4px;font-size:11px;color:#8697a6}
+  #wrap{position:relative;transform-origin:0 0}
+  #ctrl{display:flex;gap:10px;align-items:center;font-size:15px;padding:10px 16px;flex-wrap:wrap}
+  #ctrl a{color:#9fd3ff}
+  #ctrl button{font-size:16px;padding:6px 18px}
+  .rec #ctrl{display:none}
+  .big{font-size:56px;font-weight:800;line-height:1}
+  .pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:13px;font-weight:700;letter-spacing:.06em}
+</style>
+</head>
+<body>
+<div id="wrap"><div id="stage">
+  <canvas id="gl" width="1280" height="720"></canvas>
+  <div id="labels"></div>
+  <div id="ovl"></div>
+  <svg id="compass" viewBox="-22 -22 44 44"><circle r="20" fill="rgba(12,17,23,.78)"/><g id="needle"><path d="M0,-16 L5,0 L0,-3 L-5,0Z" fill="#ff5a4f"/><path d="M0,16 L5,0 L0,3 L-5,0Z" fill="#ccd"/></g><text id="ntxt" font-size="9" fill="#fff" text-anchor="middle" font-weight="700">N</text></svg>
+  <svg id="prof" viewBox="0 0 400 120"></svg>
+  <div id="info"><div class="day"></div><div class="leg"></div><div class="st"></div><div class="live"></div></div>
+  <div id="cap"></div>
+  <div class="src" id="src">Terrain: AWS/Mapzen terrain tiles (incl. LINZ 8 m DEM) · Map data © OpenStreetMap contributors · Route line indicative, not a track</div>
+</div>
+</div><div id="ctrl"><button id="play">▶ Play</button><input id="seek" type="range" min="0" max="250" step="0.1" style="flex:1;min-width:150px"><span id="tt"></span><a href="index.html">← back</a></div>
+<audio id="aud" src="narration.mp3" preload="auto"></audio>
+<script src="three.min.js"></script>
+<script src="data.js"></script>
+<script src="words.js"></script>
+<script>
+const REC = location.hash.includes('rec'); if(REC) document.body.classList.add('rec');
+const D = DATA, VE = 1.15, S = SENTS;
+const $ = id => document.getElementById(id);
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x)), lerp=(a,b,u)=>a+(b-a)*u, ss=u=>{u=clamp(u,0,1);return u*u*(3-2*u)};
+const fmt=n=>n.toLocaleString('en-NZ');
+// ---------- cues (sentence indices) ----------
+const cue = i => S[i].t0;
+const C = {intro:0, day1:cue(3), baldy:cue(7), after:cue(10), day2:cue(15), prof:cue(20), wx:cue(24), sun:cue(29), opt:cue(35), sum:cue(40), end:S[S.length-1].t1+1.5};
+// ---------- terrain ----------
+const hb = Uint8Array.from(atob(D.heights), c=>c.charCodeAt(0)); const H16 = new Uint16Array(hb.buffer);
+const GW=D.gw, GH=D.gh, CELL=D.step*D.mpp;
+function hAt(x,z){ const gx=clamp(x/CELL,0,GW-1.001), gz=clamp(z/CELL,0,GH-1.001); const i=Math.floor(gx), j=Math.floor(gz), fx=gx-i, fz=gz-j;
+  const a=H16[j*GW+i], b=H16[j*GW+i+1], c=H16[(j+1)*GW+i], d=H16[(j+1)*GW+i+1]; return (a*(1-fx)*(1-fz)+b*fx*(1-fz)+c*(1-fx)*fz+d*fx*fz); }
+const renderer = new THREE.WebGLRenderer({canvas:$('gl'), antialias:true, preserveDrawingBuffer:true});
+renderer.setPixelRatio(1); renderer.setSize(1280,720,false);
+const scene = new THREE.Scene(); const SKY=0x9db4c8; scene.background=new THREE.Color(SKY); scene.fog=new THREE.Fog(SKY, 18000, 60000);
+const cam = new THREE.PerspectiveCamera(42, 1280/720, 20, 120000);
+{ const pos=new Float32Array(GW*GH*3), uv=new Float32Array(GW*GH*2), idx=new Uint32Array((GW-1)*(GH-1)*6); let k=0,u=0,q=0;
+  for(let j=0;j<GH;j++) for(let i=0;i<GW;i++){ pos[k++]=i*CELL; pos[k++]=H16[j*GW+i]*VE; pos[k++]=j*CELL; uv[u++]=(i*D.step+.5)/D.w; uv[u++]=1-(j*D.step+.5)/D.h; }
+  for(let j=0;j<GH-1;j++) for(let i=0;i<GW-1;i++){ const a=j*GW+i,b=a+1,c=a+GW,d=c+1; idx[q++]=a;idx[q++]=c;idx[q++]=b;idx[q++]=b;idx[q++]=c;idx[q++]=d; }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setAttribute('uv',new THREE.BufferAttribute(uv,2)); g.setIndex(new THREE.BufferAttribute(idx,1));
+  const img=new Image(); window.texReady=false; const tex=new THREE.Texture(img); img.onload=()=>{tex.needsUpdate=true; tex.anisotropy=8; window.texReady=true; if(!REC) render(lastT);}; img.src=TEX;
+  scene.add(new THREE.Mesh(g,new THREE.MeshBasicMaterial({map:tex})));
+  // skirt: dark ground plane far below edges
+  const pl=new THREE.Mesh(new THREE.PlaneGeometry(400000,400000), new THREE.MeshBasicMaterial({color:0x6f8060})); pl.rotation.x=-Math.PI/2; pl.position.set(D.w*D.mpp/2,400,D.h*D.mpp/2); scene.add(pl);
+}
+// ---------- routes ----------
+function mkRoute(P, color, r, lift){ const pts=P.map(p=>new THREE.Vector3(p[0], p[2]*VE+lift, p[1]));
+  const curve=new THREE.CatmullRomCurve3(pts); const n=pts.length; const g=new THREE.TubeGeometry(curve, n, r, 6, false);
+  const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color, transparent:true, opacity:1, fog:false})); m.userData.total=g.index.count; scene.add(m); return m; }
+const satM=mkRoute(D.sat,0xff9a3c,16,14), sunM=mkRoute(D.sun,0x41b6ff,16,14), escM=mkRoute(D.escape,0xffd84a,24,18);
+const ghostSat=mkRoute(D.sat,0xffffff,7,8), ghostSun=mkRoute(D.sun,0xffffff,7,8);
+[ghostSat,ghostSun].forEach(m=>{m.material.opacity=.35});
+function showRoute(m, frac){ frac=clamp(frac,0,1); m.visible=frac>0.0005; const n=Math.floor(m.userData.total*frac/6)*6; m.geometry.setDrawRange(0,n); }
+const hiker=new THREE.Mesh(new THREE.SphereGeometry(45,16,12), new THREE.MeshBasicMaterial({color:0xffffff, fog:false})); scene.add(hiker);
+const halo=new THREE.Mesh(new THREE.SphereGeometry(90,16,12), new THREE.MeshBasicMaterial({color:0xff9a3c, transparent:true, opacity:.35, fog:false})); scene.add(halo);
+// route sampling by distance
+function sampler(P, Dd){ return function(d){ d=clamp(d,0,Dd[Dd.length-1]); let lo=0,hi=Dd.length-1; while(hi-lo>1){const m=(lo+hi)>>1; if(Dd[m]<=d) lo=m; else hi=m;} const u=(d-Dd[lo])/Math.max(1e-6,Dd[hi]-Dd[lo]); const a=P[lo],b=P[hi]; return [lerp(a[0],b[0],u),lerp(a[1],b[1],u),lerp(a[2],b[2],u)]; } }
+const satAt=sampler(D.sat,D.satD), sunAt=sampler(D.sun,D.sunD);
+const SATL=D.satD[D.satD.length-1], SUNL=D.sunD[D.sunD.length-1];
+function smoothAt(f,d,L,win){ let x=0,z=0,y=0,n=0; for(let k=-4;k<=4;k++){ const p=f(clamp(d+k*win/4,0,L)); x+=p[0];z+=p[1];y+=p[2];n++; } return [x/n,z/n,y/n]; }
+const mark=(arr,name)=>arr.find(m=>m[0]===name)[1];
+// ---------- labels ----------
+const labDiv=$('labels'); const LAB=[];
+function addLab(text,sub,p,cls,group){ const e=document.createElement('div'); e.className='lab '+(cls||''); e.innerHTML=text+(sub?'<small>'+sub+'</small>':''); labDiv.appendChild(e); LAB.push({e,p:new THREE.Vector3(p[0],p[2]*VE+20,p[1]),group}); }
+D.peaks.forEach(p=>addLab(p.n, p.ele? fmt(+p.ele)+' m':'', p.p,'', ['Mt Olympus','Castle Hill Peak','Mt Wall','Blue Hill','Willis Peak','Carn Brea'].includes(p.n)?'minor':'peak'));
+D.poi.forEach(p=>addLab(p.n,'',p.p,'poi', p.n.includes('ski field')?'esc':'poi'));
+// ---------- camera ----------
+function camSet(tg, dist, az, pitch){ const a=az*Math.PI/180, p=pitch*Math.PI/180; const x=tg[0]+dist*Math.cos(p)*Math.sin(a), z=tg[1]-dist*Math.cos(p)*Math.cos(a); let y=tg[2]*VE+dist*Math.sin(p);
+  y=Math.max(y, hAt(x,z)*VE+250); cam.position.set(x,y,z); cam.lookAt(tg[0],tg[2]*VE,tg[1]); return az; }
+const CEN=[ (D.sat[0][0]+D.sun[D.sun.length-1][0])/2-1500, (D.sat[0][1]+D.sun[D.sun.length-1][1])/2, 1300];
+const OV={tg:CEN, dist:23000, az:128, pitch:47};
+function follow(f,d,L,azOff,dist,pitch){ const c=smoothAt(f,d,L,900); const a=smoothAt(f,d-600,L,900), b=smoothAt(f,d+1400,L,900);
+  const brg=Math.atan2(b[0]-a[0], -(b[1]-a[1]))*180/Math.PI; return {tg:[c[0],c[1],c[2]+150], dist, az:brg+180+azOff, pitch}; }
+function angLerp(a,b,u){ let d=((b-a)%360+540)%360-180; return a+d*u; }
+function blend(A,B,u){ return {tg:[lerp(A.tg[0],B.tg[0],u),lerp(A.tg[1],B.tg[1],u),lerp(A.tg[2],B.tg[2],u)], dist:Math.exp(lerp(Math.log(A.dist),Math.log(B.dist),u)), az:angLerp(A.az,B.az,u), pitch:lerp(A.pitch,B.pitch,u)}; }
+// ---------- overlays ----------
+const ovl=$('ovl');
+function card(html, style){ return `<div class="card" style="${style}">${html}</div>`; }
+// profile mini chart
+const prof=$('prof');
+function profSVG(P,Dd,col,marks,cur,title){ const L=Dd[Dd.length-1], X=d=>30+d/L*355, Y=z=>100-(z-500)/1800*80;
+  let s=`<text x="12" y="16" fill="#9fb0bf" font-size="11" letter-spacing="1.5">${title}</text>`;
+  [1000,1500,2000].forEach(z=>s+=`<line x1="30" x2="385" y1="${Y(z)}" y2="${Y(z)}" stroke="#ffffff22"/><text x="26" y="${Y(z)+3}" fill="#7f8f9e" font-size="9" text-anchor="end">${z}</text>`);
+  let dpath=''; for(let i=0;i<P.length;i+=4) dpath+=(i?'L':'M')+X(Dd[i]).toFixed(1)+','+Y(P[i][2]).toFixed(1);
+  s+=`<path d="${dpath}L385,100L30,100Z" fill="${col}33"/><path d="${dpath}" fill="none" stroke="${col}" stroke-width="2"/>`;
+  if(cur!=null){ let i=Dd.findIndex(v=>v>=cur); if(i<0)i=Dd.length-1; s+=`<line x1="${X(cur)}" x2="${X(cur)}" y1="22" y2="100" stroke="#fff8"/><circle cx="${X(cur)}" cy="${Y(P[i][2])}" r="4.5" fill="#fff"/>`; }
+  s+=`<text x="385" y="114" fill="#7f8f9e" font-size="9" text-anchor="end">${(L/1000).toFixed(1)} km</text><text x="30" y="114" fill="#7f8f9e" font-size="9">0</text>`;
+  return s; }
+function bigProfile(u){ // full weekend profile card
+  const W=1100,Hh=400, x0=80,x1=1060,y0=60,y1=330; const L1=SATL, L=SATL+SUNL, X=d=>x0+d/L*(x1-x0), Y=z=>y1-(z-500)/1800*(y1-y0);
+  let s=`<svg width="${W}" height="${Hh}" viewBox="0 0 ${W} ${Hh}">`;
+  [600,1000,1400,1800,2200].forEach(z=>s+=`<line x1="${x0}" x2="${x1}" y1="${Y(z)}" y2="${Y(z)}" stroke="#ffffff1c"/><text x="${x0-8}" y="${Y(z)+4}" fill="#8a9aa9" font-size="13" text-anchor="end">${fmt(z)} m</text>`);
+  for(let k=0;k<=31;k+=5) s+=`<text x="${X(k*1000)}" y="${y1+20}" fill="#8a9aa9" font-size="12" text-anchor="middle">${k} km</text>`;
+  const clip=x0+(x1-x0)*ss(u);
+  s+=`<defs><clipPath id="cp"><rect x="0" y="0" width="${clip}" height="${Hh}"/></clipPath></defs><g clip-path="url(#cp)">`;
+  const seg=(P,Dd,off,col)=>{ let d=''; for(let i=0;i<P.length;i+=3) d+=(i?'L':'M')+X(Dd[i]+off).toFixed(1)+','+Y(P[i][2]).toFixed(1); return `<path d="${d}L${X(Dd[Dd.length-1]+off)},${y1}L${X(off)},${y1}Z" fill="${col}30"/><path d="${d}" fill="none" stroke="${col}" stroke-width="3"/>`; };
+  s+=seg(D.sat,D.satD,0,'#ff9a3c')+seg(D.sun,D.sunD,SATL,'#41b6ff');
+  const tag=(d,z,t,dy)=>`<line x1="${X(d)}" x2="${X(d)}" y1="${Y(z)-4}" y2="${Y(z)-dy+12}" stroke="#fff6"/><text x="${X(d)}" y="${Y(z)-dy}" fill="#fff" font-size="13" text-anchor="middle" font-weight="600">${t}</text>`;
+  const sm=D.satMarks, um=D.sunMarks; const g=(arr,n)=>arr.find(m=>m[0]===n);
+  [['Baldy Hill','Baldy Hill 1,834',30],['Hamilton Peak','Hamilton 1,922',30],['Mt Cheeseman','Cheeseman 2,031',44],['Tarns camp','camp ~1,670',-36]].forEach(([n,t,dy])=>{const m=g(sm,n); s+=tag(m[1],m[2],t,dy);});
+  [['Mt Izard','Izard 2,019',30],['Mt Cloudesley','Cloudesley 2,107',44],['Mt Enys','Enys 2,194',30],['Porters car park','Porters ~1,290',30]].forEach(([n,t,dy])=>{const m=g(um,n); s+=tag(m[1]+SATL,m[2],t,dy);});
+  s+=`<text x="${X(200)}" y="${Y(663)+22}" fill="#fff" font-size="13" font-weight="600">SH73 ~660</text>`;
+  s+=`</g><line x1="${X(SATL)}" x2="${X(SATL)}" y1="${y0-10}" y2="${y1}" stroke="#fff5" stroke-dasharray="4 4"/>`;
+  s+=`<text x="${X(SATL/2)}" y="${y0-24}" fill="#ff9a3c" font-size="16" font-weight="700" text-anchor="middle">SATURDAY · ~18 km · ~2,000 m up</text>`;
+  s+=`<text x="${X(SATL+SUNL/2)}" y="${y0-24}" fill="#41b6ff" font-size="16" font-weight="700" text-anchor="middle">SUNDAY · ~13.5 km · ~1,000 m up / ~1,400 m down</text>`;
+  s+=`<text x="${x1}" y="${Hh-12}" fill="#8a9aa9" font-size="12" text-anchor="end">Estimates from an 8 m terrain model, ±10% · route line indicative</text></svg>`;
+  return s; }
+function windSVG(t,strength){ // NW wind streaks moving to SE across screen, screen-space
+  let s='<svg width="1280" height="720" style="position:absolute;left:0;top:0">';
+  for(let i=0;i<46;i++){ const seed=Math.sin(i*91.7)*43758.5453, r=seed-Math.floor(seed); const sp=(380+r*420)*strength; const ph=((t*sp + r*3000) % 1900) - 300;
+    const y0=(i*37)%760-40; const x=ph, y=y0+ph*0.42; s+=`<line x1="${x}" y1="${y}" x2="${x+70+60*strength}" y2="${y+(70+60*strength)*0.42}" stroke="rgba(255,255,255,${0.18+0.25*strength})" stroke-width="${1.5+2*strength}" stroke-linecap="round"/>`; }
+  return s+'</svg>'; }
+// ---------- main render ----------
+let lastT=0;
+function setInfo(day,leg,st,live,col){ const i=$('info'); i.style.display=day?'block':'none'; if(!day) return; i.style.borderLeftColor=col; i.children[0].textContent=day; i.children[1].textContent=leg; i.children[2].innerHTML=st; i.children[3].innerHTML=live; }
+const LEGS={
+  climb:['SATURDAY · from ~8:30 am','SH73 → Baldy Hill','~4.3 km · ~1,150 m up · 3–4 h'],
+  ridge1:['SATURDAY','Baldy Hill → Hamilton Peak','~4.9 km · ridge ~1,800 m · lunch 1:30–3 pm'],
+  ridge2:['SATURDAY','Hamilton → Cheeseman → tarns','~8.9 km · camp ~1,670 m · sunset 8:43 pm'],
+  sun:['SUNDAY · away by 7 am','Tarns → Mt Enys → Porters','~13.5 km · +1,000 / −1,400 m · 6–8 h'] };
+window.render = function(t){
+  lastT=t;
+  // captions
+  let cap=''; for(const s of S){ if(t>=s.t0-0.15 && t<=s.t1+0.35){cap=s.cap;break;} } $('cap').textContent=cap; $('cap').style.display=cap?'block':'none';
+  let V, ovlHTML='', labelMode='peak', profHTML=null, warnPulse=0;
+  satM.material.color.set(0xff9a3c); sunM.material.color.set(0x41b6ff);
+  let satF=0,sunF=0,escF=0, hk=null, hcol=0xff9a3c, ghosts=1;
+  if(t<C.day1){ // intro: slow orbit of overview, draw both routes faintly then fully
+    const u=t/C.day1; V={tg:OV.tg,dist:lerp(27000,23000,ss(u)),az:lerp(150,128,ss(u)),pitch:lerp(55,47,ss(u))};
+    satF=ss((t-4)/5); sunF=ss((t-8)/5);
+    const op=1-ss((t-4)/1.2);
+    ovlHTML=card(`<h3>TRAMP PLAN · CRAIGIEBURN RANGE, CANTERBURY</h3><h2>Craigieburn Range traverse</h2><div style="font-size:20px;color:#d8e2ea">Sat 14 – Sun 15 Nov 2026 · Ribbonwood Stream → Mt Cheeseman tarns → Porters</div>`,`left:24px;top:22px;width:760px;opacity:${op}`);
+    if(t>9.5){ ovlHTML+=card(`<div class="row"><span class="pill" style="background:#ff9a3c;color:#111">SAT</span><span>~18 km</span></div><div class="row"><span class="pill" style="background:#41b6ff;color:#111">SUN</span><span>~13.5 km</span></div><div class="row" style="font-size:22px;font-weight:700">≈ 31 km total</div>`,`left:24px;top:22px;width:260px;opacity:${ss((t-9.5)/0.8)}`); }
+    labelMode='overview'; ghosts=0;
+  } else if(t<C.prof){ // flyby
+    let f,d,L,azOff,leg,day,col;
+    if(t<C.day2){ f=satAt; L=SATL; col='#ff9a3c';
+      const dB=mark(D.satMarks,'Baldy Hill'), dH=mark(D.satMarks,'Hamilton Peak');
+      if(t<C.baldy){ const u=ss((t-C.day1-2)/(C.baldy-C.day1-2)); d=u*dB; leg=LEGS.climb; azOff=-35; }
+      else if(t<C.after){ const u=(t-C.baldy)/(C.after-C.baldy); d=lerp(dB,dH,ss(u)); leg=LEGS.ridge1; azOff=-35+u*10; }
+      else { const u=(t-C.after)/(C.day2-C.after-3); d=lerp(dH,SATL,ss(u)); leg=LEGS.ridge2; azOff=-25; }
+      satF=d/SATL; sunF=0; hk=f(d);
+      V=follow(f,d,L,azOff,4200,30);
+      if(t<C.day1+3){ V=blend(OV,V,ss((t-C.day1)/3)); }
+      if(t>C.day2-3){ const u=ss((t-(C.day2-3))/3); V=blend(V,follow(sunAt,0,SUNL,-30,4200,30),u); }
+      setInfo(leg[0],leg[1],leg[2],`Walked <b>${(d/1000).toFixed(1)} km</b> &nbsp;·&nbsp; Elevation <b>${fmt(Math.round(hk[2]/10)*10)} m</b>`,col);
+      profHTML=profSVG(D.sat,D.satD,'#ff9a3c',D.satMarks,d,'SATURDAY PROFILE');
+    } else { f=sunAt; L=SUNL; col='#41b6ff'; hcol=0x41b6ff;
+      const u=ss((t-C.day2-1)/(C.prof-C.day2-4)); d=u*SUNL; satF=1; sunF=d/SUNL; hk=f(d);
+      V=follow(f,d,L,-30+15*u,4200,30);
+      if(t>C.prof-3) V=blend(V,OV,ss((t-(C.prof-3))/3));
+      setInfo(LEGS.sun[0],LEGS.sun[1],LEGS.sun[2],`Walked <b>${(d/1000).toFixed(1)} km</b> &nbsp;·&nbsp; Elevation <b>${fmt(Math.round(hk[2]/10)*10)} m</b>`,col);
+      profHTML=profSVG(D.sun,D.sunD,'#41b6ff',D.sunMarks,d,'SUNDAY PROFILE');
+    }
+  } else if(t<C.wx){ // big profile
+    satF=sunF=1; V={tg:OV.tg,dist:23000,az:lerp(128,118,(t-C.prof)/(C.wx-C.prof)),pitch:47};
+    ovlHTML=`<div style="position:absolute;inset:0;background:rgba(10,14,19,${0.75*ss((t-C.prof)/0.8)})"></div>`+card(bigProfile((t-C.prof-0.3)/4),`left:90px;top:40px;width:1100px;height:420px;padding:10px;opacity:${ss((t-C.prof)/0.8)}`);
+    labelMode='none';
+  } else if(t<C.sun){ // Saturday weather
+    satF=1; sunF=1; V={tg:(p=>[p[0],p[1],p[2]+1800])(smoothAt(satAt,SATL*0.45,SATL,900)),dist:16000,az:lerp(120,105,(t-C.wx)/(C.sun-C.wx)),pitch:38};
+    sunM.material.color.set(0x5c7c95);
+    const o=ss((t-C.wx-0.5)/0.8);
+    ovlHTML=card(`<h3>METSERVICE MOUNTAIN FORECAST · ISSUED FRI 13 NOV</h3><h2 style="color:#ff9a3c">Saturday 14 Nov</h2>
+      <div style="font-size:26px;font-weight:700;margin:6px 0 10px">☀ Fine · high cloud increasing pm</div>
+      <div class="row"><span class="k">Wind @ 2,000 m</span><span>W 30 km/h → 50 km/h evening</span></div>
+      <div class="row"><span class="k">Wind @ 1,000 m</span><span>Light; NW 40 (60 exposed) evening</span></div>
+      <div class="row"><span class="k">Freezing level</span><span>2,400–3,000 m</span></div>
+      <div class="row"><span class="k">Temperature</span><span>~1 °C to 11 °C (ski-field model)</span></div>
+      <div class="row"><span class="k">Daylight</span><span>Sunrise 5:53 am · sunset 8:43 pm</span></div>`,`left:24px;top:22px;width:560px;opacity:${o}`);
+    labelMode='overview';
+  } else if(t<C.opt){ // Sunday weather warning
+    satF=1; sunF=1; const u=(t-C.sun)/(C.opt-C.sun);
+    V={tg:(p=>[p[0],p[1],p[2]+1500])(smoothAt(sunAt,mark(D.sunMarks,'Mt Enys')*0.8,SUNL,900)),dist:lerp(15000,11000,ss(u)),az:lerp(300,325,u),pitch:32};
+    warnPulse=0.5+0.5*Math.sin(t*4); sunM.material.color.setRGB(1, 0.35+0.25*warnPulse, 0.3);
+    const o=ss((t-C.sun-0.3)/0.8);
+    ovlHTML=windSVG(t, ss((t-C.sun)/3))+card(`<h3>METSERVICE · ISSUED FRI 13 NOV ~1 PM</h3><h2 style="color:#ff5a4f">Sunday 15 Nov ⚠</h2>
+      <div style="font-size:22px;font-weight:700;margin:6px 0 10px">Mostly cloudy, showers developing pm</div>
+      <div class="row"><span class="k">Wind @ 2,000 m</span><span><b style="color:#ff5a4f">NW gale 70 → severe gale 100 km/h</b> (before dawn)</span></div>
+      <div class="row"><span class="k">Wind @ 1,000 m</span><span>NW 60 → gale 80 km/h (morning)</span></div>
+      <div class="row"><span class="k">Main Divide</span><span>Showers turning to heavy rain pm</span></div>
+      <div class="row"><span class="k">Hazards</span><span>Wind (+ rain, wind chill on the Divide)</span></div>
+      <div class="row"><span class="k">Route exposure</span><span>~83% of Sunday above 1,900 m</span></div>`,`left:24px;top:22px;width:600px;opacity:${o}`);
+    labelMode='near';
+  } else if(t<C.sum){ // options
+    satF=1; sunF=1; escF=ss((t-cue(38))/3);
+    const camp=D.poi.find(p=>p.n.startsWith('Camp')).p;
+    const u=(t-C.opt)/(C.sum-C.opt);
+    V=blend({tg:OV.tg,dist:23000,az:128,pitch:47},{tg:[camp[0]+1500,camp[1]-800,camp[2]],dist:12000,az:140,pitch:45},ss((t-cue(37))/4));
+    sunM.material.color.set(0x41b6ff); sunM.material.opacity=1-0.6*ss((t-cue(37))/2);
+    const o=ss((t-C.opt-0.3)/0.8);
+    const item=(i,on,txt)=>`<div class="row" style="opacity:${on?1:.35}"><span class="pill" style="background:#fff;color:#111">${i}</span><span>${txt}</span></div>`;
+    ovlHTML=card(`<h3>OPTIONS TO DISCUSS</h3>
+      ${item(1,t>=cue(36),'Re-check the forecast Saturday morning')}
+      ${item(2,t>=cue(37),'Keep Saturday; Sunday exit via Mt Cheeseman ski field (~4 km from tarns) → road to SH73. Move the pickup.')}
+      ${item(3,t>=cue(39),'Shorten to the good day, or pick a calmer weekend')}`,`left:24px;top:22px;width:600px;opacity:${o}`);
+    labelMode='opt';
+  } else { // summary
+    satF=1; sunF=1; escF=1; sunM.material.opacity=1;
+    V={tg:OV.tg,dist:lerp(23000,26000,(t-C.sum)/(C.end-C.sum)),az:lerp(128,140,(t-C.sum)/(C.end-C.sum)),pitch:47};
+    const o=ss((t-C.sum-0.2)/0.8);
+    ovlHTML=card(`<h3>SUMMARY</h3>
+      <div class="row"><span class="pill" style="background:#ff9a3c;color:#111">SAT</span><span>~18 km · ~2,000 m up · fine weather</span></div>
+      <div class="row"><span class="pill" style="background:#41b6ff;color:#111">SUN</span><span>~13.5 km · highest ground · <b style="color:#ff5a4f">severe gale forecast</b></span></div>
+      <div class="row" style="margin-top:12px;font-size:17px;color:#d8e2ea">✓ Intentions left with someone &nbsp; ✓ PLB &nbsp; ✓ Re-check MetService before leaving</div>`,`left:24px;top:22px;width:640px;opacity:${o}`);
+    labelMode='overview';
+  }
+  if(t<C.sun||t>=C.sum) sunM.material.opacity = (t<C.opt? 1 : sunM.material.opacity);
+  showRoute(satM,satF); showRoute(sunM,sunF); showRoute(escM,escF);
+  ghostSat.visible=ghostSun.visible=!!ghosts;
+  if(hk){ hiker.visible=halo.visible=true; hiker.position.set(hk[0],hk[2]*VE+40,hk[1]); halo.position.copy(hiker.position); halo.material.color.set(hcol); halo.scale.setScalar(1+0.25*Math.sin(t*5)); }
+  else hiker.visible=halo.visible=false;
+  // info/prof visibility
+  if(!(t>=C.day1 && t<C.prof)) setInfo(null);
+  prof.style.display=profHTML?'block':'none'; if(profHTML) prof.innerHTML=profHTML;
+  $('compass').style.display=(t>=C.prof&&t<C.wx)?'none':'block';
+  $('compass').style.right = profHTML? '440px':'24px';
+  ovl.innerHTML=ovlHTML;
+  $('src').textContent = (t>=C.wx && t<C.opt) ? 'Forecast: MetService mountain & ski-field forecasts (Canterbury High Country, Mt Cheeseman, Porters, Arthur’s Pass NP), issued Fri 13 Nov 2026 · check for updates' : 'Terrain: AWS/Mapzen terrain tiles (incl. LINZ 8 m DEM) · Map data © OpenStreetMap contributors · Route line indicative, not a track';
+  // camera
+  camSet(V.tg,V.dist,V.az,V.pitch); cam.updateMatrixWorld();
+  $('needle').setAttribute('transform',`rotate(${-(V.az+180)})`);
+  const na=-(V.az+180)*Math.PI/180; $('ntxt').setAttribute('x',(Math.sin(na)*-0)+''); $('ntxt').setAttribute('y','4');
+  // labels
+  const v=new THREE.Vector3(); const camP=cam.position;
+  for(const L of LAB){ let show=false;
+    if(labelMode==='none') show=false;
+    else if(labelMode==='overview') show=(L.group==='poi'||L.group==='peak'&&['Baldy Hill','Hamilton Peak','Mt Cheeseman','Mt Enys'].includes(L.e.firstChild.textContent));
+    else if(labelMode==='opt') show=(L.group==='poi'||L.group==='esc');
+    else if(labelMode==='near') show=(L.group==='peak'||L.group==='poi');
+    else show=(L.group==='peak'||L.group==='poi'||L.group==='minor') && L.p.distanceTo(camP)<11000;
+    if(show){ v.copy(L.p).project(cam); if(v.z>1||Math.abs(v.x)>1.05||Math.abs(v.y)>1.05) show=false; }
+    if(show){ const x=(v.x+1)/2*1280, y=(1-v.y)/2*720; if(y<150 && (x<330||x>840)) show=false; L.e.style.left=x+'px'; L.e.style.top=y+'px'; }
+    L.e.style.display=show?'block':'none'; }
+  renderer.render(scene,cam);
+};
+// ---------- browser playback ----------
+const aud=$('aud'), seek=$('seek');
+if(!REC){ seek.max=C.end; $('play').onclick=()=>{ if(aud.paused){aud.play();$('play').textContent='❚❚ Pause';} else {aud.pause();$('play').textContent='▶ Play';} };
+  seek.oninput=()=>{aud.currentTime=+seek.value; render(+seek.value);};
+  (function loop(){ if(!aud.paused){ render(aud.currentTime); seek.value=aud.currentTime; $('tt').textContent=aud.currentTime.toFixed(1)+' s'; } requestAnimationFrame(loop); })();
+}
+render(0);
+function fit(){ const sc=Math.min(1, innerWidth/1280); const w=$('wrap'); w.style.transform='scale('+sc+')'; w.style.height=(720*sc)+'px'; w.style.width='1280px'; w.parentElement.style.height='auto'; }
+if(!REC){ addEventListener('resize',fit); fit(); document.body.style.overflowX='hidden'; document.body.style.overflowY='auto'; }
+aud.addEventListener('ended',()=>{$('play').textContent='▶ Play';});
+</script>
+</body>
+</html>

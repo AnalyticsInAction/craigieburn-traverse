@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Craigieburn Range Traverse</title>
+<meta name="description" content="Route, distances and weather for a two-day Craigieburn Range traverse, Sat 14 – Sun 15 Nov 2026.">
+<meta property="og:title" content="Craigieburn Range traverse – trip explainer">
+<meta property="og:description" content="Ribbonwood Stream → Baldy Hill → Hamilton Peak → Mt Cheeseman tarns → Mt Enys → Porters. 3D flyover, distances and forecast.">
+<meta property="og:image" content="poster.jpg">
+<style>
+  :root{--bg:#f6f7f8;--ink:#1b232b;--mut:#5d6b78;--card:#fff;--line:#e2e6ea;--sat:#e07a1f;--sun:#1f8fd6;--warn:#c8322a}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f141a;--ink:#eef2f5;--mut:#9fb0bf;--card:#18212b;--line:#26323e;--sat:#ff9a3c;--sun:#41b6ff;--warn:#ff6a5f}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Segoe UI",system-ui,sans-serif}
+  main{max-width:960px;margin:0 auto;padding:28px 16px 48px}
+  h1{font-size:clamp(26px,5vw,38px);margin:0 0 4px;line-height:1.15}
+  .sub{color:var(--mut);margin:0 0 20px}
+  video{width:100%;border-radius:12px;background:#000;display:block}
+  .btn{display:inline-block;margin:14px 0 4px;padding:10px 18px;border-radius:8px;background:var(--sun);color:#fff;text-decoration:none;font-weight:600}
+  .warn{border-left:5px solid var(--warn);background:var(--card);padding:14px 18px;border-radius:8px;margin:22px 0}
+  .warn b{color:var(--warn)}
+  table{width:100%;border-collapse:collapse;background:var(--card);border-radius:10px;overflow:hidden;margin:18px 0;font-size:15px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--mut);font-weight:600;font-size:13px;letter-spacing:.04em}
+  .tag{display:inline-block;padding:1px 9px;border-radius:12px;color:#fff;font-size:12px;font-weight:700}
+  .small{color:var(--mut);font-size:13px}
+  .scroll{overflow-x:auto}
+</style>
+</head>
+<body>
+<main>
+  <h1>Craigieburn Range traverse</h1>
+  <p class="sub">Sat 14 – Sun 15 Nov 2026 · Ribbonwood Stream (SH73) → Baldy Hill → Hamilton Peak → Mt Cheeseman tarns → Mt Enys → Porters</p>
+
+  <video controls preload="metadata" poster="poster.jpg" playsinline>
+    <source src="craigieburn_traverse.mp4" type="video/mp4">
+  </video>
+  <a class="btn" href="flyover.html">Open the interactive 3D flyover →</a>
+  <div class="small">Interactive version works best on a laptop or desktop.</div>
+
+  <div class="warn"><b>Weather heads-up (MetService, issued Fri 13 Nov ~1 pm):</b> Saturday fine, light winds. <b>Sunday: NW gale 70 km/h at 2,000 m rising to severe gale ~100 km/h before dawn</b>, showers developing in the afternoon (heavy rain on the Main Divide). Sunday's route is mostly exposed ridge above 1,900 m. Re-check the forecast before leaving.</div>
+
+  <div class="scroll"><table>
+    <tr><th>DAY</th><th>ROUTE</th><th>DISTANCE</th><th>CLIMB</th><th>MOVING TIME (EST.)</th></tr>
+    <tr><td><span class="tag" style="background:var(--sat)">SAT</span></td><td>SH73 Ribbonwood bridge (~660 m) → Ribbonwood Spur → Baldy Hill 1,834 → Hamilton Peak 1,922 (lunch) → Mt Cockayne → Mt Cheeseman 2,031 → tarns SW of summit (~1,670 m)</td><td>~18 km</td><td>~2,000 m up</td><td>8½–11 h + breaks. Start ~8:30 am, sunset 8:43 pm</td></tr>
+    <tr><td><span class="tag" style="background:var(--sun)">SUN</span></td><td>Tarns → Mt Izard 2,019 → Mt Cloudesley 2,107 → Mt Enys 2,194 → Porters ski area → car park (~1,290 m)</td><td>~13.5 km</td><td>~1,000 m up, ~1,400 m down</td><td>6–8 h. Away by 7 am</td></tr>
+  </table></div>
+  <p><b>Possible Sunday exit:</b> Mt Cheeseman ski field is about 4 km from the tarns, and its access road leads down to SH73. The pickup would need to move there.</p>
+
+  <p class="small">Distances and climbs are estimates from an 8 m terrain model (±10%). The route line is indicative, not a track. Terrain: AWS/Mapzen terrain tiles (incl. LINZ 8 m DEM). Peaks and tarns © OpenStreetMap contributors. Forecast summarised from MetService mountain and ski-field forecasts; always check <a href="https://www.metservice.com/mountains-and-parks/national-parks/canterbury-high-country">MetService</a> before you go. Narration voice: Phonon "Preston".</p>
+</main>
+</body>
+</html>
