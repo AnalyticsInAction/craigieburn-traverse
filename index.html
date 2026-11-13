@@ -4,57 +4,133 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Craigieburn Range Traverse</title>
-<meta name="description" content="Route, distances and weather for a two-day Craigieburn Range traverse, Sat 14 – Sun 15 Nov 2026.">
+<meta name="description" content="Route, distances, maps, bail-outs and forecast links for a two-day Craigieburn Range traverse, Sat 14 – Sun 15 Nov 2026.">
 <meta property="og:title" content="Craigieburn Range traverse – trip explainer">
-<meta property="og:description" content="Ribbonwood Stream → Baldy Hill → Hamilton Peak → Mt Cheeseman tarns → Mt Enys → Porters. 3D flyover, distances and forecast.">
+<meta property="og:description" content="Ribbonwood Stream → Baldy Hill → Hamilton Peak → Mt Cheeseman → Mt Enys → Porters. Video, 3D flyover, maps, GPX and forecast links.">
 <meta property="og:image" content="poster.jpg">
 <style>
-  :root{--bg:#f6f7f8;--ink:#1b232b;--mut:#5d6b78;--card:#fff;--line:#e2e6ea;--sat:#e07a1f;--sun:#1f8fd6;--warn:#c8322a}
-  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f141a;--ink:#eef2f5;--mut:#9fb0bf;--card:#18212b;--line:#26323e;--sat:#ff9a3c;--sun:#41b6ff;--warn:#ff6a5f}}
+  :root{--bg:#f6f7f8;--ink:#1b232b;--mut:#5d6b78;--card:#fff;--line:#e2e6ea;--sat:#e07a1f;--sun:#1f8fd6;--warn:#c8322a;--btn:#1f6fd6;--btnink:#fff}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f141a;--ink:#eef2f5;--mut:#9fb0bf;--card:#18212b;--line:#26323e;--sat:#ff9a3c;--sun:#41b6ff;--warn:#ff6a5f;--btn:#2f86ff}}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Segoe UI",system-ui,sans-serif}
-  main{max-width:960px;margin:0 auto;padding:28px 16px 48px}
+  main{max-width:980px;margin:0 auto;padding:24px 16px 48px}
   h1{font-size:clamp(26px,5vw,38px);margin:0 0 4px;line-height:1.15}
-  .sub{color:var(--mut);margin:0 0 20px}
+  h2{font-size:22px;margin:34px 0 10px}
+  a{color:var(--btn)}
+  .sub{color:var(--mut);margin:0 0 18px}
+  nav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+  nav a{font-size:14px;padding:5px 12px;border:1px solid var(--line);border-radius:20px;text-decoration:none;color:var(--ink);background:var(--card)}
+  .panel{background:var(--card);border-radius:12px;padding:16px 18px;border:1px solid var(--line)}
+  .panel.wx{border-left:6px solid var(--warn)}
+  .btns{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:12px 0}
+  .btn{display:block;padding:14px 16px;border-radius:10px;background:var(--btn);color:var(--btnink);text-decoration:none;font-weight:700;font-size:17px;line-height:1.25}
+  .btn small{display:block;font-weight:400;font-size:13px;opacity:.9;margin-top:3px}
+  .btn.alt{background:var(--card);color:var(--ink);border:2px solid var(--btn)}
   video{width:100%;border-radius:12px;background:#000;display:block}
-  .btn{display:inline-block;margin:14px 0 4px;padding:10px 18px;border-radius:8px;background:var(--sun);color:#fff;text-decoration:none;font-weight:600}
-  .warn{border-left:5px solid var(--warn);background:var(--card);padding:14px 18px;border-radius:8px;margin:22px 0}
-  .warn b{color:var(--warn)}
-  table{width:100%;border-collapse:collapse;background:var(--card);border-radius:10px;overflow:hidden;margin:18px 0;font-size:15px}
-  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  table{width:100%;border-collapse:collapse;background:var(--card);border-radius:10px;overflow:hidden;margin:12px 0;font-size:15px}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
   th{color:var(--mut);font-weight:600;font-size:13px;letter-spacing:.04em}
+  tr.bail td:first-child{border-left:4px solid var(--warn)} tr.camp td:first-child{border-left:4px solid var(--sat)} tr.go td:first-child{border-left:4px solid #2e9d4a}
   .tag{display:inline-block;padding:1px 9px;border-radius:12px;color:#fff;font-size:12px;font-weight:700}
   .small{color:var(--mut);font-size:13px}
   .scroll{overflow-x:auto}
+  .thumbs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:12px 0}
+  .thumbs a{display:block;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;text-decoration:none;color:var(--ink);font-weight:600;font-size:14px}
+  .thumbs img{width:100%;height:150px;object-fit:cover;border-radius:6px;display:block;margin-bottom:8px}
+  ul li{margin:4px 0}
 </style>
 </head>
 <body>
 <main>
   <h1>Craigieburn Range traverse</h1>
-  <p class="sub">Sat 14 – Sun 15 Nov 2026 · Ribbonwood Stream (SH73) → Baldy Hill → Hamilton Peak → Mt Cheeseman tarns → Mt Enys → Porters</p>
+  <p class="sub">Sat 14 – Sun 15 Nov 2026 · Ribbonwood Stream (SH73) → Baldy Hill → Hamilton Peak → Mt Cheeseman → Mt Enys → Porters</p>
+  <nav><a href="#forecast">Morning forecast</a><a href="#video">Video</a><a href="#maps">Maps &amp; GPX</a><a href="#bailouts">Bail-outs</a><a href="#options">Options</a><a href="#route">Route</a></nav>
 
-  <video controls preload="metadata" poster="poster.jpg" playsinline>
-    <source src="craigieburn_traverse.mp4" type="video/mp4">
-  </video>
-  <a class="btn" href="flyover.html">Open the interactive 3D flyover →</a>
-  <div class="small">Interactive version works best on a laptop or desktop.</div>
+  <section id="forecast" class="panel wx">
+    <h2 style="margin-top:0">Saturday morning forecast check (before 7 am)</h2>
+    <div class="btns">
+      <a class="btn" href="https://www.metservice.com/mountains-and-parks/national-parks/canterbury-high-country" target="_blank" rel="noopener">1 · Canterbury High Country<small>Written mountain forecast for the Craigieburns. Check the issue time on Sunday's forecast</small></a>
+      <a class="btn" href="https://www.metservice.com/mountains-and-parks/ski-fields/cheeseman" target="_blank" rel="noopener">2 · Mt Cheeseman ski field<small>3-hourly wind &amp; temperature at 1,874 m</small></a>
+      <a class="btn" href="https://www.metservice.com/mountains-and-parks/ski-fields/porter-heights" target="_blank" rel="noopener">3 · Porters ski field<small>3-hourly wind &amp; temperature at 1,980 m</small></a>
+      <a class="btn" href="https://www.metservice.com/warnings/home" target="_blank" rel="noopener">4 · Severe weather warnings<small>Any watch or warning for Canterbury High Country?</small></a>
+      <a class="btn alt" href="https://www.metservice.com/mountains-and-parks/national-parks/arthurs-pass" target="_blank" rel="noopener">Arthur's Pass NP<small>Main Divide (rain upwind)</small></a>
+      <a class="btn alt" href="https://www.avalanche.net.nz/" target="_blank" rel="noopener">NZ Avalanche Advisory<small>Arthur's Pass region</small></a>
+    </div>
+    <p style="margin:6px 0"><b>As of Friday:</b> Saturday fine. Sunday NW gale on the tops (written forecast: severe gale ~100 km/h at 2,000 m), building through the day, wind chill −4 to −6 °C.</p>
+    <p class="small" style="margin:6px 0">Written mountain forecasts are usually issued early in the afternoon (Friday's Sunday forecast was 1:14 pm), so at 6:30 am Sunday's text may still be Friday's. The 3-hourly ski-field tables appear to refresh more often. <b>If Sunday still shows a severe gale, consider options 1 or 2 below.</b></p>
+  </section>
 
-  <div class="warn"><b>Check the weather before you go.</b> As of Friday 13 Nov, strong to gale-force north-westerlies were forecast on the tops for Sunday, building through the day, with wind chill below zero. Sunday's route is mostly exposed ridge above 1,900 m. Get the latest official forecasts here:
-  <ul style="margin:8px 0 0;padding-left:20px">
-    <li><a href="https://www.metservice.com/mountains-and-parks/national-parks/canterbury-high-country">MetService – Canterbury High Country</a> (covers the Craigieburn Range)</li>
-    <li><a href="https://www.metservice.com/mountains-and-parks/ski-fields/cheeseman">MetService – Mt Cheeseman ski field</a> · <a href="https://www.metservice.com/mountains-and-parks/ski-fields/porter-heights">Porters ski field</a></li>
-    <li><a href="https://www.metservice.com/mountains-and-parks/national-parks/arthurs-pass">MetService – Arthur's Pass National Park</a></li>
-    <li><a href="https://www.avalanche.net.nz/">NZ Avalanche Advisory</a></li>
-  </ul></div>
+  <section id="video">
+    <h2>Video explainer (5½ min)</h2>
+    <video controls preload="metadata" poster="poster.jpg" playsinline><source src="craigieburn_traverse.mp4" type="video/mp4"></video>
+    <p><a href="flyover.html">Open the interactive 3D flyover →</a> <span class="small">(best on a laptop)</span></p>
+  </section>
 
-  <div class="scroll"><table>
-    <tr><th>DAY</th><th>ROUTE</th><th>DISTANCE</th><th>CLIMB</th><th>MOVING TIME (EST.)</th></tr>
-    <tr><td><span class="tag" style="background:var(--sat)">SAT</span></td><td>SH73 Ribbonwood bridge (~660 m) → Ribbonwood Spur → Baldy Hill 1,834 → Hamilton Peak 1,922 (lunch) → Mt Cockayne → Mt Cheeseman 2,031 → tarns SW of summit (~1,670 m)</td><td>~18 km</td><td>~2,000 m up</td><td>8½–11 h + breaks. Start ~8:30 am, sunset 8:43 pm</td></tr>
-    <tr><td><span class="tag" style="background:var(--sun)">SUN</span></td><td>Tarns → Mt Izard 2,019 → Mt Cloudesley 2,107 → Mt Enys 2,194 → Porters ski area → car park (~1,290 m)</td><td>~13.5 km</td><td>~1,000 m up, ~1,400 m down</td><td>6–8 h. Away by 7 am</td></tr>
-  </table></div>
-  <p><b>Possible Sunday exit:</b> Mt Cheeseman ski field is about 4 km from the tarns, and its access road leads down to SH73. The pickup would need to move there.</p>
+  <section id="maps">
+    <h2>Maps &amp; GPX downloads</h2>
+    <div class="btns">
+      <a class="btn" href="maps/craigieburn_map_pack.pdf" download>⬇ Map pack (PDF, 25 MB)<small>Overview + 3 section maps at 1:50,000 + waypoint list. Print A4 at 100%</small></a>
+      <a class="btn" href="maps/craigieburn_traverse.gpx" download>⬇ GPX for phone/GPS<small>Route, exit lines, Long Spur bail-out, waypoints. Load into NZ Topo Map, Gaia, etc.</small></a>
+    </div>
+    <div class="thumbs">
+      <a href="maps/0_overview.png" download><img src="maps/thumb_0_overview.jpg" alt="Overview map" loading="lazy">Overview 1:100k (NW exposure tint)</a>
+      <a href="maps/1_day1_ribbonwood_to_hamilton.png" download><img src="maps/thumb_1_day1_ribbonwood_to_hamilton.jpg" alt="Day 1A map" loading="lazy">Day 1A · Ribbonwood → Hamilton</a>
+      <a href="maps/2_day1_hamilton_to_cheeseman_exits.png" download><img src="maps/thumb_2_day1_hamilton_to_cheeseman_exits.jpg" alt="Day 1B map" loading="lazy">Day 1B · Hamilton → Cheeseman, camp &amp; exits</a>
+      <a href="maps/3_day2_cheeseman_to_porters_bailout.png" download><img src="maps/thumb_3_day2_cheeseman_to_porters_bailout.jpg" alt="Day 2 map" loading="lazy">Day 2 · Cheeseman → Porters, Long Spur</a>
+    </div>
+    <p class="small">Route lines are indicative (8 m terrain model + OpenStreetMap), not marked tracks. Carry the official Topo50 map. Blue grid = NZTM2000, same as Topo50.</p>
+  </section>
 
-  <p class="small">Distances and climbs are estimates from an 8 m terrain model (±10%). The route line is indicative, not a track. Terrain: AWS/Mapzen terrain tiles (incl. LINZ 8 m DEM). Peaks and tarns © OpenStreetMap contributors. The video reflects the forecast as at Friday 13 Nov; always use the latest MetService forecast. Narration voice: Phonon "Preston".</p>
+  <section id="bailouts">
+    <h2>Waypoints &amp; bail-out points</h2>
+    <p class="small">Tap a name to open it on the official LINZ Topo50 map (topomap.co.nz). Red = exit/bail-out, orange = camp, green = start/finish.</p>
+    <div class="scroll"><table>
+      <tr><th>WAYPOINT</th><th>ELEV m</th><th>NZTM E N</th><th>NOTE</th></tr>
+      <tr class='go'><td><a href='https://www.topomap.co.nz/NZTopoMap?v=2&ll=-43.08198,171.77383&z=15&pin=1' target='_blank' rel='noopener'>Start - Ribbonwood Stream bridge (SH73)</a></td><td>663</td><td>1500189 5229352</td><td>Day 1 start ~8:30 am</td></tr>
+<tr class=''><td><a href='https://www.topomap.co.nz/NZTopoMap?v=2&ll=-43.08659,171.72962&z=15&pin=1' target='_blank' rel='noopener'>Baldy Hill 1834</a></td><td>1,826</td><td>1496598 5228786</td><td>Top of Ribbonwood Spur</td></tr>
+<tr class=''><td><a href='https://www.topomap.co.nz/NZTopoMap?v=2&ll=-43.11330,171.68860&z=15&pin=1' target='_blank' rel='noopener'>Hamilton Peak 1922</a></td><td>1,920</td><td>1493306 5225769</td><td>Planned lunch</td></tr>
+<tr class=''><td><a href='https://www.topomap.co.nz/NZTopoMap?v=2&ll=-43.15125,171.66146&z=15&pin=1' target='_blank' rel='noopener'>Mt Cockayne 1874</a></td><td>1,867</td><td>1491165 5221519</td><td></td></tr>
+<tr class=''><td><a href='https://www.topomap.co.nz/NZTopoMap?v=2&ll=-43.16945,171.64330&z=15&pin=1' target='_blank' rel='noopener'>Mt Cheeseman 2031</a></td><td>2,018</td><td>1489721 5219474</td><td></td></tr>
+<tr class='camp'><td><a href='https://www.topomap.co.nz/NZTopoMap?v=2&ll=-43.17620,171.63470&z=15&pin=1' target='_blank' rel='noopener'>Camp - tarns SW of Cheeseman</a></td><td>1,671</td><td>1489034 5218713</td><td>Planned camp ~1670 m (west side)</td></tr>
+<tr class='bail'><td><a href='https://www.topomap.co.nz/NZTopoMap?v=2&ll=-43.17026,171.64387&z=15&pin=1' target='_blank' rel='noopener'>Exit ridge crossing (sheltered line)</a></td><td>2,004</td><td>1489769 5219386</td><td>Cross here, drop well below crest on E side</td></tr>
+<tr class='bail'><td><a href='https://www.topomap.co.nz/NZTopoMap?v=2&ll=-43.15461,171.66520&z=15&pin=1' target='_blank' rel='noopener'>Lee camp / Mt Cheeseman ski basin</a></td><td>1,678</td><td>1491475 5221151</td><td>Sheltered from NW; ski-field road exit</td></tr>
+<tr class='bail'><td><a href='https://www.topomap.co.nz/NZTopoMap?v=2&ll=-43.19694,171.73436&z=15&pin=1' target='_blank' rel='noopener'>Cheeseman Rd at SH73</a></td><td>648</td><td>1497169 5216537</td><td>Bottom of ski-field road (~13 km road walk from basin)</td></tr>
+<tr class=''><td><a href='https://www.topomap.co.nz/NZTopoMap?v=2&ll=-43.18664,171.64197&z=15&pin=1' target='_blank' rel='noopener'>Mt Izard 2019</a></td><td>2,013</td><td>1489644 5217564</td><td></td></tr>
+<tr class='bail'><td><a href='https://www.topomap.co.nz/NZTopoMap?v=2&ll=-43.20602,171.64240&z=15&pin=1' target='_blank' rel='noopener'>Mt Cloudesley 2107 - Long Spur bail-out</a></td><td>2,103</td><td>1489714 5215412</td><td>Top of Long Spur (unmarked, not DOC-maintained)</td></tr>
+<tr class='bail'><td><a href='https://www.topomap.co.nz/NZTopoMap?v=2&ll=-43.20051,171.68930&z=15&pin=1' target='_blank' rel='noopener'>Long Spur at bushline</a></td><td>918</td><td>1493514 5216085</td><td>End of Long Spur ~920 m; ~4-5 km forest tracks to Castle Hill</td></tr>
+<tr class='bail'><td><a href='https://www.topomap.co.nz/NZTopoMap?v=2&ll=-43.20848,171.71578&z=15&pin=1' target='_blank' rel='noopener'>Castle Hill Village</a></td><td>730</td><td>1495679 5215233</td><td>Bail-out destination</td></tr>
+<tr class=''><td><a href='https://www.topomap.co.nz/NZTopoMap?v=2&ll=-43.23356,171.63499&z=15&pin=1' target='_blank' rel='noopener'>Mt Enys 2194</a></td><td>2,186</td><td>1489162 5212344</td><td>Highest point</td></tr>
+<tr class='go'><td><a href='https://www.topomap.co.nz/NZTopoMap?v=2&ll=-43.27359,171.64291&z=15&pin=1' target='_blank' rel='noopener'>Pickup - Porters car park</a></td><td>1,292</td><td>1489877 5207909</td><td>Day 2 finish ~1290 m</td></tr>
+
+    </table></div>
+    <ul>
+      <li><b>Tarns → Mt Cheeseman basin (sheltered line):</b> ~4.3 km, +370 m. Cross the ridge just south of Cheeseman's summit, then drop well below the crest on the east side. Avoid the crest line (~2.3 km exposed). The lee side still gets violent gusts just below the crest.</li>
+      <li><b>Mt Cheeseman ski-field road:</b> ~13 km road walk from the basin to SH73, sheltered once in the beech forest. Check vehicle access if you want a pickup higher up.</li>
+      <li><b>Mt Cloudesley → Long Spur:</b> ~4.3 km to the bushline (~920 m), then ~4–5 km of forest tracks to Castle Hill village. Unmarked and not maintained by DOC; easy to lose in cloud.</li>
+    </ul>
+  </section>
+
+  <section id="options">
+    <h2>Keeping the trip, lowering the risk</h2>
+    <p>In a nor'wester the <b>west side</b> of the range takes the wind. The <b>east side</b>, including the Mt Cheeseman ski basin, is sheltered. The planned tarns are on the west side.</p>
+    <div class="scroll"><table>
+      <tr><th>OPTION</th><th>SATURDAY</th><th>SUNDAY</th></tr>
+      <tr><td><b>1 · Camp in the lee</b></td><td>As planned, then down into Mt Cheeseman basin (~19.8 km)</td><td>Decide at dawn: ridge to Enys &amp; Porters if manageable, or walk out the ski-field road (~13 km to SH73)</td></tr>
+      <tr><td><b>2 · Reverse it</b></td><td>Porters → Enys → Cloudesley → Izard → Cheeseman → basin (~16.7 km, ~1,700 m up, 8–10 h): highest ground on the fine day</td><td>Walk out the ski-field road. Needs drop-off at Porters &amp; pickup on Cheeseman Rd; check road access</td></tr>
+      <tr><td><b>3 · Original, with turnarounds</b></td><td>As planned</td><td>Start at first light. Exits: sheltered line to Cheeseman basin, or Long Spur from Mt Cloudesley. After Cloudesley you're committed to the most exposed stretch</td></tr>
+    </table></div>
+  </section>
+
+  <section id="route">
+    <h2>Planned route</h2>
+    <div class="scroll"><table>
+      <tr><th>DAY</th><th>ROUTE</th><th>DISTANCE</th><th>CLIMB</th><th>MOVING TIME (EST.)</th></tr>
+      <tr><td><span class="tag" style="background:var(--sat)">SAT</span></td><td>SH73 Ribbonwood bridge (~660 m) → Ribbonwood Spur → Baldy Hill 1,834 → Hamilton Peak 1,922 (lunch) → Mt Cockayne → Mt Cheeseman 2,031 → tarns (~1,670 m)</td><td>~18 km</td><td>~2,000 m up</td><td>8½–11 h + breaks. Start ~8:30 am, sunset 8:43 pm</td></tr>
+      <tr><td><span class="tag" style="background:var(--sun)">SUN</span></td><td>Tarns → Mt Izard 2,019 → Mt Cloudesley 2,107 → Mt Enys 2,194 → Porters ski area → car park (~1,290 m)</td><td>~13.5 km</td><td>~1,000 m up, ~1,400 m down</td><td>6–8 h. Away by 7 am</td></tr>
+    </table></div>
+  </section>
+
+  <p class="small" style="margin-top:30px">Distances and climbs are estimates from an 8 m terrain model (±10%). Terrain: AWS/Mapzen terrain tiles (incl. LINZ 8 m DEM). Peaks, tarns, roads &amp; tracks © OpenStreetMap contributors. The video reflects MetService's forecast as at Friday 13 Nov; always use the latest MetService forecast. Narration voice: Phonon "Preston".</p>
 </main>
 </body>
 </html>

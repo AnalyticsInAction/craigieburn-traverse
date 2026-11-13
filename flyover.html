@@ -13,6 +13,7 @@
   .lab{position:absolute;transform:translate(-50%,-100%);white-space:nowrap;font-size:14px;font-weight:600;color:#fff;text-shadow:0 1px 3px #000,0 0 6px #000;padding-bottom:6px}
   .lab small{display:block;font-weight:400;font-size:12px;color:#dde6ee;text-align:center}
   .lab.poi{font-size:15px;color:#ffe9a8}
+  .lab.bail{color:#ffe9a8}
   .lab::after{content:"";position:absolute;left:50%;bottom:0;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:#fff;box-shadow:0 0 4px #000}
   #cap{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);max-width:1080px;text-align:center;font-size:24px;line-height:1.3;
        background:rgba(8,12,16,.72);padding:8px 18px;border-radius:8px}
@@ -50,7 +51,7 @@
   <div id="cap"></div>
   <div class="src" id="src">Terrain: AWS/Mapzen terrain tiles (incl. LINZ 8 m DEM) · Map data © OpenStreetMap contributors · Route line indicative, not a track</div>
 </div>
-</div><div id="ctrl"><button id="play">▶ Play</button><input id="seek" type="range" min="0" max="250" step="0.1" style="flex:1;min-width:150px"><span id="tt"></span><a href="index.html">← back</a></div>
+</div><div id="ctrl"><button id="play">▶ Play</button><input id="seek" type="range" min="0" max="330" step="0.1" style="flex:1;min-width:150px"><span id="tt"></span><a href="index.html">← back</a></div>
 <audio id="aud" src="narration.mp3" preload="auto"></audio>
 <script src="three.min.js"></script>
 <script src="data.js"></script>
@@ -63,7 +64,7 @@ const clamp=(x,a,b)=>Math.max(a,Math.min(b,x)), lerp=(a,b,u)=>a+(b-a)*u, ss=u=>{
 const fmt=n=>n.toLocaleString('en-NZ');
 // ---------- cues (sentence indices) ----------
 const cue = i => S[i].t0;
-const C = {intro:0, day1:cue(3), baldy:cue(7), after:cue(10), day2:cue(15), prof:cue(20), wx:cue(24), sun:cue(29), opt:cue(35), sum:cue(40), end:S[S.length-1].t1+1.5};
+const C = {intro:0, day1:cue(3), baldy:cue(7), after:cue(10), day2:cue(15), prof:cue(20), wx:cue(24), sun:cue(27), shel:cue(32), opt:cue(40), opt2:cue(44), opt3:cue(48), dec:cue(51), sum:cue(56), end:S[S.length-1].t1+1.5};
 // ---------- terrain ----------
 const hb = Uint8Array.from(atob(D.heights), c=>c.charCodeAt(0)); const H16 = new Uint16Array(hb.buffer);
 const GW=D.gw, GH=D.gh, CELL=D.step*D.mpp;
@@ -78,7 +79,8 @@ const cam = new THREE.PerspectiveCamera(42, 1280/720, 20, 120000);
   for(let j=0;j<GH-1;j++) for(let i=0;i<GW-1;i++){ const a=j*GW+i,b=a+1,c=a+GW,d=c+1; idx[q++]=a;idx[q++]=c;idx[q++]=b;idx[q++]=b;idx[q++]=c;idx[q++]=d; }
   const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setAttribute('uv',new THREE.BufferAttribute(uv,2)); g.setIndex(new THREE.BufferAttribute(idx,1));
   const img=new Image(); window.texReady=false; const tex=new THREE.Texture(img); img.onload=()=>{tex.needsUpdate=true; tex.anisotropy=8; window.texReady=true; if(!REC) render(lastT);}; img.src=TEX;
-  scene.add(new THREE.Mesh(g,new THREE.MeshBasicMaterial({map:tex})));
+  window.terrMat=new THREE.MeshBasicMaterial({map:tex}); scene.add(new THREE.Mesh(g,terrMat)); window.tex1=tex;
+  const img2=new Image(); window.tex2Ready=false; window.tex2=new THREE.Texture(img2); img2.onload=()=>{tex2.needsUpdate=true; tex2.anisotropy=8; window.tex2Ready=true;}; img2.src=TEX2;
   // skirt: dark ground plane far below edges
   const pl=new THREE.Mesh(new THREE.PlaneGeometry(400000,400000), new THREE.MeshBasicMaterial({color:0x6f8060})); pl.rotation.x=-Math.PI/2; pl.position.set(D.w*D.mpp/2,400,D.h*D.mpp/2); scene.add(pl);
 }
@@ -89,6 +91,8 @@ function mkRoute(P, color, r, lift){ const pts=P.map(p=>new THREE.Vector3(p[0], 
 const satM=mkRoute(D.sat,0xff9a3c,16,14), sunM=mkRoute(D.sun,0x41b6ff,16,14), escM=mkRoute(D.escape,0xffd84a,24,18);
 const ghostSat=mkRoute(D.sat,0xffffff,7,8), ghostSun=mkRoute(D.sun,0xffffff,7,8);
 [ghostSat,ghostSun].forEach(m=>{m.material.opacity=.35});
+const D2=DATA2; const shelM=mkRoute(D2.tarnsShel,0x3ff0ff,20,18), easyM=mkRoute(D2.tarnsEasy,0xffe14a,20,18), leeM=mkRoute(D2.leeDesc,0x3ff0ff,20,18),
+  revM=mkRoute(D2.revSat,0xff9a3c,16,14), comM=mkRoute(D2.committed,0xff4a3a,22,20);
 function showRoute(m, frac){ frac=clamp(frac,0,1); m.visible=frac>0.0005; const n=Math.floor(m.userData.total*frac/6)*6; m.geometry.setDrawRange(0,n); }
 const hiker=new THREE.Mesh(new THREE.SphereGeometry(45,16,12), new THREE.MeshBasicMaterial({color:0xffffff, fog:false})); scene.add(hiker);
 const halo=new THREE.Mesh(new THREE.SphereGeometry(90,16,12), new THREE.MeshBasicMaterial({color:0xff9a3c, transparent:true, opacity:.35, fog:false})); scene.add(halo);
@@ -102,7 +106,8 @@ const mark=(arr,name)=>arr.find(m=>m[0]===name)[1];
 const labDiv=$('labels'); const LAB=[];
 function addLab(text,sub,p,cls,group){ const e=document.createElement('div'); e.className='lab '+(cls||''); e.innerHTML=text+(sub?'<small>'+sub+'</small>':''); labDiv.appendChild(e); LAB.push({e,p:new THREE.Vector3(p[0],p[2]*VE+20,p[1]),group}); }
 D.peaks.forEach(p=>addLab(p.n, p.ele? fmt(+p.ele)+' m':'', p.p,'', ['Mt Olympus','Castle Hill Peak','Mt Wall','Blue Hill','Willis Peak','Carn Brea'].includes(p.n)?'minor':'peak'));
-D.poi.forEach(p=>addLab(p.n,'',p.p,'poi', p.n.includes('ski field')?'esc':'poi'));
+D.poi.forEach(p=>addLab(p.n.includes('ski field')?'Mt Cheeseman ski basin':p.n, p.n.includes('ski field')?'sheltered from NW':'',p.p,'poi', p.n.includes('ski field')?'esc':'poi'));
+addLab('Bail-out: Long Spur','→ Castle Hill village',D2.cloudesley,'poi','bail');
 // ---------- camera ----------
 function camSet(tg, dist, az, pitch){ const a=az*Math.PI/180, p=pitch*Math.PI/180; const x=tg[0]+dist*Math.cos(p)*Math.sin(a), z=tg[1]-dist*Math.cos(p)*Math.cos(a); let y=tg[2]*VE+dist*Math.sin(p);
   y=Math.max(y, hAt(x,z)*VE+250); cam.position.set(x,y,z); cam.lookAt(tg[0],tg[2]*VE,tg[1]); return az; }
@@ -163,7 +168,8 @@ window.render = function(t){
   let cap=''; for(const s of S){ if(t>=s.t0-0.15 && t<=s.t1+0.35){cap=s.cap;break;} } $('cap').textContent=cap; $('cap').style.display=cap?'block':'none';
   let V, ovlHTML='', labelMode='peak', profHTML=null, warnPulse=0;
   satM.material.color.set(0xff9a3c); sunM.material.color.set(0x41b6ff);
-  let satF=0,sunF=0,escF=0, hk=null, hcol=0xff9a3c, ghosts=1;
+  let satF=0,sunF=0,escF=0, hk=null, hcol=0xff9a3c, ghosts=1, useTex2=false, shelF=0, easyF=0, leeF=0, revF=0, comF=0;
+  satM.material.opacity=1; sunM.material.opacity=1;
   if(t<C.day1){ // intro: slow orbit of overview, draw both routes faintly then fully
     const u=t/C.day1; V={tg:OV.tg,dist:lerp(27000,23000,ss(u)),az:lerp(150,128,ss(u)),pitch:lerp(55,47,ss(u))};
     satF=ss((t-4)/5); sunF=ss((t-8)/5);
@@ -201,50 +207,106 @@ window.render = function(t){
     const o=ss((t-C.wx-0.5)/0.8);
     ovlHTML=card(`<h3>METSERVICE MOUNTAIN FORECAST · ISSUED FRI 13 NOV</h3><h2 style="color:#ff9a3c">Saturday 14 Nov</h2>
       <div style="font-size:26px;font-weight:700;margin:6px 0 10px">☀ Fine · high cloud increasing pm</div>
-      <div class="row"><span class="k">Wind @ 2,000 m</span><span>W 30 km/h → 50 km/h evening</span></div>
-      <div class="row"><span class="k">Wind @ 1,000 m</span><span>Light; NW 40 (60 exposed) evening</span></div>
+      <div class="row"><span class="k">Wind on tops</span><span>Light; westerly ~50 km/h by evening</span></div>
       <div class="row"><span class="k">Freezing level</span><span>2,400–3,000 m</span></div>
-      <div class="row"><span class="k">Temperature</span><span>~1 °C to 11 °C (ski-field model)</span></div>
       <div class="row"><span class="k">Daylight</span><span>Sunrise 5:53 am · sunset 8:43 pm</span></div>`,`left:24px;top:22px;width:560px;opacity:${o}`);
     labelMode='overview';
-  } else if(t<C.opt){ // Sunday weather warning
-    satF=1; sunF=1; const u=(t-C.sun)/(C.opt-C.sun);
+  } else if(t<C.shel){ // Sunday weather
+    satF=1; sunF=1; const u=(t-C.sun)/(C.shel-C.sun);
     V={tg:(p=>[p[0],p[1],p[2]+1500])(smoothAt(sunAt,mark(D.sunMarks,'Mt Enys')*0.8,SUNL,900)),dist:lerp(15000,11000,ss(u)),az:lerp(300,325,u),pitch:32};
     warnPulse=0.5+0.5*Math.sin(t*4); sunM.material.color.setRGB(1, 0.35+0.25*warnPulse, 0.3);
     const o=ss((t-C.sun-0.3)/0.8);
+    const ch=[[6,42,34],[9,42,53],[12,52,61],[15,55,69],[18,55,58]];
+    const reveal=ss((t-cue(29))/3);
+    let svg=`<svg width="560" height="172" viewBox="0 0 560 172"><text x="0" y="14" fill="#9fb0bf" font-size="12" letter-spacing="1">MODEL WIND ON SKI-FIELD TOPS, SUNDAY (km/h average; gusts higher)</text>`;
+    const X=h=>40+(h-6)/12*480, Y=v=>150-v*1.5;
+    [20,40,60].forEach(v=>svg+=`<line x1="40" x2="525" y1="${Y(v)}" y2="${Y(v)}" stroke="#ffffff22"/><text x="34" y="${Y(v)+4}" fill="#8a9aa9" font-size="11" text-anchor="end">${v}</text>`);
+    svg+=`<rect x="${X(10.7)}" y="22" width="${X(12)-X(10.7)}" height="128" fill="#41b6ff22" opacity="${ss((t-cue(30))/1)}"/><text x="${X(11.35)}" y="34" fill="#9fd3ff" font-size="11" text-anchor="middle" opacity="${ss((t-cue(30))/1)}">at Enys ~10:45–12</text>`;
+    ch.forEach(([h,c,p])=>{ svg+=`<rect x="${X(h)-16}" y="${Y(c*reveal)}" width="14" height="${c*1.5*reveal}" fill="#ffb27a"/><rect x="${X(h)+2}" y="${Y(p*reveal)}" width="14" height="${p*1.5*reveal}" fill="#ff5a4f"/><text x="${X(h)}" y="167" fill="#8a9aa9" font-size="11" text-anchor="middle">${h<12?h+' am':h==12?'noon':(h-12)+' pm'}</text>`; });
+    svg+=`<rect x="56" y="44" width="10" height="10" fill="#ffb27a"/><text x="71" y="53" fill="#ccd" font-size="11">Cheeseman top 1,874 m</text><rect x="56" y="60" width="10" height="10" fill="#ff5a4f"/><text x="71" y="69" fill="#ccd" font-size="11">Porters top 1,980 m</text></svg>`;
     ovlHTML=windSVG(t, ss((t-C.sun)/3))+card(`<h3>METSERVICE · ISSUED FRI 13 NOV ~1 PM</h3><h2 style="color:#ff5a4f">Sunday 15 Nov ⚠</h2>
-      <div style="font-size:22px;font-weight:700;margin:6px 0 10px">Mostly cloudy, showers developing pm</div>
-      <div class="row"><span class="k">Wind @ 2,000 m</span><span><b style="color:#ff5a4f">NW gale 70 → severe gale 100 km/h</b> (before dawn)</span></div>
-      <div class="row"><span class="k">Wind @ 1,000 m</span><span>NW 60 → gale 80 km/h (morning)</span></div>
-      <div class="row"><span class="k">Main Divide</span><span>Showers turning to heavy rain pm</span></div>
-      <div class="row"><span class="k">Hazards</span><span>Wind (+ rain, wind chill on the Divide)</span></div>
-      <div class="row"><span class="k">Route exposure</span><span>~83% of Sunday above 1,900 m</span></div>`,`left:24px;top:22px;width:600px;opacity:${o}`);
+      <div class="row"><span class="k">Written forecast</span><span>NW gale → <b style="color:#ff5a4f">severe gale ~100 km/h at 2,000 m</b></span></div>
+      <div class="row" style="opacity:${ss((t-cue(31))/1)}"><span class="k">Feels like</span><span>−4 to −6 °C (air 1–3 °C)</span></div>
+      <div style="opacity:${ss((t-cue(29))/1)}">${svg}</div>`,`left:24px;top:22px;width:610px;opacity:${o}`);
     labelMode='near';
-  } else if(t<C.sum){ // options
-    satF=1; sunF=1; escF=ss((t-cue(38))/3);
+  } else if(t<C.opt){ // shelter analysis
+    satF=1; sunF=1; useTex2=true; const u=(t-C.shel)/(C.opt-C.shel);
+    const camp=D.poi.find(p=>p.n.startsWith('Camp')).p, bas=D.poi.find(p=>p.n.includes('ski field')).p;
+    const mid=[(camp[0]+bas[0])/2+600,(camp[1]+bas[1])/2+900,1900];
+    const A={tg:mid,dist:9000,az:lerp(195,178,u),pitch:50};
+    const prevV={tg:(p=>[p[0],p[1],p[2]+1500])(smoothAt(sunAt,mark(D.sunMarks,'Mt Enys')*0.8,SUNL,900)),dist:11000,az:325,pitch:32};
+    V=blend(prevV,A,ss((t-C.shel)/3));
+    sunM.material.opacity=.45; satM.material.opacity=.45;
+    shelF=ss((t-cue(35))/4); easyF=ss((t-cue(37))/3);
+    const o=ss((t-C.shel-0.3)/0.8);
+    ovlHTML=windSVG(t,0.6)+card(`<h3>NW-WIND SHELTER · FROM 8 M TERRAIN MODEL</h3>
+      <div class="row"><span class="pill" style="background:#e85a44;color:#fff">RED</span><span>exposed to a nor'wester</span></div>
+      <div class="row"><span class="pill" style="background:#4f78c8;color:#fff">BLUE</span><span>sheltered (lee) side</span></div>
+      <div class="row" style="opacity:${ss((t-cue(35))/1)}"><span class="pill" style="background:#3ff0ff;color:#111">EXIT</span><span>Tarns → basin, sheltered line: ~4.3 km, +370 m</span></div>
+      <div class="row" style="opacity:${ss((t-cue(37))/1)}"><span class="pill" style="background:#ffe14a;color:#111">AVOID</span><span>Crest line: ~4.0 km, but ~2.3 km exposed</span></div>
+      <div class="row" style="opacity:${ss((t-cue(38))/1)};font-size:16px;color:#ffd0c8">Lee slopes still get violent gusts just below the crest</div>`,`left:24px;top:22px;width:560px;opacity:${o}`);
+    labelMode='shel';
+  } else if(t<C.opt2){ // option 1: lee camp
+    useTex2=true; satF=1; sunF=1; leeF=ss((t-cue(41))/3);
+    sunM.material.opacity=.35;
+    const bas=D.poi.find(p=>p.n.includes('ski field')).p;
     const camp=D.poi.find(p=>p.n.startsWith('Camp')).p;
-    const u=(t-C.opt)/(C.sum-C.opt);
-    V=blend({tg:OV.tg,dist:23000,az:128,pitch:47},{tg:[camp[0]+1500,camp[1]-800,camp[2]],dist:12000,az:140,pitch:45},ss((t-cue(37))/4));
-    sunM.material.color.set(0x41b6ff); sunM.material.opacity=1-0.6*ss((t-cue(37))/2);
+    const A={tg:[(camp[0]+bas[0])/2+600,(camp[1]+bas[1])/2+900,1900],dist:9000,az:178,pitch:50};
+    V=blend(A,{tg:[bas[0]+1500,bas[1]-1000,1600],dist:19000,az:150,pitch:50},ss((t-C.opt)/4));
     const o=ss((t-C.opt-0.3)/0.8);
-    const item=(i,on,txt)=>`<div class="row" style="opacity:${on?1:.35}"><span class="pill" style="background:#fff;color:#111">${i}</span><span>${txt}</span></div>`;
-    ovlHTML=card(`<h3>OPTIONS TO DISCUSS</h3>
-      ${item(1,t>=cue(36),'Re-check the forecast Saturday morning')}
-      ${item(2,t>=cue(37),'Keep Saturday; Sunday exit via Mt Cheeseman ski field (~4 km from tarns) → road to SH73. Move the pickup.')}
-      ${item(3,t>=cue(39),'Shorten to the good day, or pick a calmer weekend')}`,`left:24px;top:22px;width:600px;opacity:${o}`);
-    labelMode='opt';
+    ovlHTML=card(`<h3>KEEP THE TRIP · LOWER THE RISK</h3><h2 style="color:#3ff0ff">Option 1 · Camp in the lee</h2>
+      <div class="row"><span class="k">Saturday</span><span>As planned, then down into Cheeseman basin · ~19.8 km</span></div>
+      <div class="row" style="opacity:${ss((t-cue(42))/1)}"><span class="k">Sunday dawn</span><span>Decide: ridge to Enys &amp; Porters if manageable…</span></div>
+      <div class="row" style="opacity:${ss((t-cue(43))/1)}"><span class="k"></span><span>…or walk out the ski-field road, ~13 km to SH73</span></div>`,`left:24px;top:22px;width:600px;opacity:${o}`);
+    labelMode='opt1';
+  } else if(t<C.opt3){ // option 2: reverse
+    useTex2=true; const u=ss((t-cue(45))/(cue(47)-cue(45)));
+    revF=u; leeF=0; satF=0; sunF=0; ghosts=1;
+    const rv=D2.revSat; const k=Math.min(rv.length-1,Math.floor(u*(rv.length-1))); if(u>0.001) hk=[rv[k][0],rv[k][1],rv[k][2]];
+    const c=rv[Math.floor(rv.length*0.45)];
+    V={tg:[c[0]+1200,c[1],1800],dist:lerp(19000,17000,(t-C.opt2)/(C.opt3-C.opt2)),az:lerp(130,115,(t-C.opt2)/(C.opt3-C.opt2)),pitch:50};
+    const o=ss((t-C.opt2-0.3)/0.8);
+    ovlHTML=card(`<h3>KEEP THE TRIP · LOWER THE RISK</h3><h2 style="color:#ff9a3c">Option 2 · Reverse it</h2>
+      <div class="row"><span class="k">Saturday</span><span>Porters → Enys → Cloudesley → Izard → Cheeseman → basin</span></div>
+      <div class="row"><span class="k"></span><span>~16.7 km · ~1,700 m up · 8–10 h · highest ground on the fine day</span></div>
+      <div class="row" style="opacity:${ss((t-cue(47))/1)}"><span class="k">Sunday</span><span>Walk out the ski-field road (sheltered, downhill)</span></div>
+      <div class="row" style="font-size:15px;color:#9fb0bf"><span class="k"></span><span>Needs drop-off at Porters &amp; pickup on Cheeseman Rd. Check road access.</span></div>`,`left:24px;top:22px;width:640px;opacity:${o}`);
+    labelMode='opt2';
+  } else if(t<C.dec){ // option 3: original with turnarounds
+    satF=1; sunF=1; comF=ss((t-cue(50))/2.5);
+    const cl=D2.cloudesley;
+    V={tg:[cl[0]+800,cl[1]+1500,1900],dist:lerp(16000,13000,(t-C.opt3)/(C.dec-C.opt3)),az:lerp(140,125,(t-C.opt3)/(C.dec-C.opt3)),pitch:46};
+    const o=ss((t-C.opt3-0.3)/0.8);
+    ovlHTML=card(`<h3>KEEP THE TRIP · LOWER THE RISK</h3><h2 style="color:#41b6ff">Option 3 · Original, with turnarounds</h2>
+      <div class="row"><span class="k">Start</span><span>Early, from first light</span></div>
+      <div class="row" style="opacity:${ss((t-cue(49))/1)}"><span class="k">Exits</span><span>Tarns → Cheeseman basin (sheltered line) · Mt Cloudesley → Long Spur → Castle Hill village</span></div>
+      <div class="row" style="opacity:${ss((t-cue(50))/1)}"><span class="k">Committed</span><span style="color:#ff8a7a">Cloudesley → Enys → Porters: most exposed stretch</span></div>`,`left:24px;top:22px;width:640px;opacity:${o}`);
+    labelMode='opt3';
+  } else if(t<C.sum){ // decision point
+    satF=1; sunF=1;
+    V={tg:OV.tg,dist:lerp(23000,24000,(t-C.dec)/(C.sum-C.dec)),az:lerp(128,120,(t-C.dec)/(C.sum-C.dec)),pitch:47};
+    const o=ss((t-C.dec-0.3)/0.8);
+    const it=(on,txt)=>`<div class="row" style="opacity:${on?1:.3}"><span>☐</span><span>${txt}</span></div>`;
+    ovlHTML=`<div style="position:absolute;inset:0;background:rgba(10,14,19,${0.55*o})"></div>`+card(`<h3>SATURDAY ~6:30 AM · BEFORE THE 7 AM DECISION</h3><h2>Check the forecast</h2>
+      ${it(t>=cue(52),'Written mountain forecasts usually update early afternoon, so Sunday may still be Friday’s issue')}
+      ${it(t>=cue(53),'Check the <b>issue time</b>')}
+      ${it(t>=cue(54),'Check the 3-hourly ski-field tables (Cheeseman, Porters), which update more often')}
+      ${it(t>=cue(54)+3,'Any severe weather watch or warning?')}
+      ${it(t>=cue(55),'Still a severe gale on Sunday? Choose option 1 or 2')}
+      <div style="font-size:14px;color:#9fb0bf;margin-top:10px">metservice.com → Mountains &amp; Parks → Canterbury High Country</div>`,`left:250px;top:110px;width:780px;opacity:${o}`);
+    labelMode='none';
   } else { // summary
-    satF=1; sunF=1; escF=1; sunM.material.opacity=1;
+    satF=1; sunF=1;
     V={tg:OV.tg,dist:lerp(23000,26000,(t-C.sum)/(C.end-C.sum)),az:lerp(128,140,(t-C.sum)/(C.end-C.sum)),pitch:47};
     const o=ss((t-C.sum-0.2)/0.8);
     ovlHTML=card(`<h3>SUMMARY</h3>
       <div class="row"><span class="pill" style="background:#ff9a3c;color:#111">SAT</span><span>~18 km · ~2,000 m up · fine weather</span></div>
-      <div class="row"><span class="pill" style="background:#41b6ff;color:#111">SUN</span><span>~13.5 km · highest ground · <b style="color:#ff5a4f">severe gale forecast</b></span></div>
-      <div class="row" style="margin-top:12px;font-size:17px;color:#d8e2ea">✓ Intentions left with someone &nbsp; ✓ PLB &nbsp; ✓ Re-check MetService before leaving</div>`,`left:24px;top:22px;width:640px;opacity:${o}`);
+      <div class="row"><span class="pill" style="background:#41b6ff;color:#111">SUN</span><span>~13.5 km · highest ground · <b style="color:#ff5a4f">wind building all day</b></span></div>
+      <div class="row" style="margin-top:12px;font-size:17px;color:#d8e2ea">✓ Know where the lee is &nbsp; ✓ Turnaround points &nbsp; ✓ Intentions &nbsp; ✓ PLB</div>`,`left:24px;top:22px;width:640px;opacity:${o}`);
     labelMode='overview';
   }
-  if(t<C.sun||t>=C.sum) sunM.material.opacity = (t<C.opt? 1 : sunM.material.opacity);
-  showRoute(satM,satF); showRoute(sunM,sunF); showRoute(escM,escF);
+  showRoute(satM,satF); showRoute(sunM,sunF); showRoute(escM,escF); showRoute(shelM,shelF); showRoute(easyM,easyF); showRoute(leeM,leeF); showRoute(revM,revF); showRoute(comM,comF);
+  const wantTex=(useTex2&&window.tex2Ready)?tex2:tex1; if(terrMat.map!==wantTex){terrMat.map=wantTex; terrMat.needsUpdate=true;}
   ghostSat.visible=ghostSun.visible=!!ghosts;
   if(hk){ hiker.visible=halo.visible=true; hiker.position.set(hk[0],hk[2]*VE+40,hk[1]); halo.position.copy(hiker.position); halo.material.color.set(hcol); halo.scale.setScalar(1+0.25*Math.sin(t*5)); }
   else hiker.visible=halo.visible=false;
@@ -254,7 +316,7 @@ window.render = function(t){
   $('compass').style.display=(t>=C.prof&&t<C.wx)?'none':'block';
   $('compass').style.right = profHTML? '440px':'24px';
   ovl.innerHTML=ovlHTML;
-  $('src').textContent = (t>=C.wx && t<C.opt) ? 'Forecast: MetService mountain & ski-field forecasts (Canterbury High Country, Mt Cheeseman, Porters, Arthur’s Pass NP), issued Fri 13 Nov 2026 · check for updates' : 'Terrain: AWS/Mapzen terrain tiles (incl. LINZ 8 m DEM) · Map data © OpenStreetMap contributors · Route line indicative, not a track';
+  $('src').textContent = (t>=C.wx && t<C.shel) ? 'Forecast: MetService mountain & ski-field forecasts (Canterbury High Country, Mt Cheeseman, Porters, Arthur’s Pass NP), issued Fri 13 Nov 2026 · check for updates' : 'Terrain: AWS/Mapzen terrain tiles (incl. LINZ 8 m DEM) · Map data © OpenStreetMap contributors · Route line indicative, not a track';
   // camera
   camSet(V.tg,V.dist,V.az,V.pitch); cam.updateMatrixWorld();
   $('needle').setAttribute('transform',`rotate(${-(V.az+180)})`);
@@ -264,7 +326,10 @@ window.render = function(t){
   for(const L of LAB){ let show=false;
     if(labelMode==='none') show=false;
     else if(labelMode==='overview') show=(L.group==='poi'||L.group==='peak'&&['Baldy Hill','Hamilton Peak','Mt Cheeseman','Mt Enys'].includes(L.e.firstChild.textContent));
-    else if(labelMode==='opt') show=(L.group==='poi'||L.group==='esc');
+    else if(labelMode==='shel') show=(L.group==='esc'||L.e.firstChild.textContent.startsWith('Camp')||['Mt Cheeseman','Mt Cockayne'].includes(L.e.firstChild.textContent));
+    else if(labelMode==='opt1') show=(L.group==='esc'||(L.group==='poi'&&!L.e.firstChild.textContent.startsWith('Camp'))||['Mt Enys','Mt Cheeseman'].includes(L.e.firstChild.textContent));
+    else if(labelMode==='opt2') show=(L.group==='esc'||['Mt Enys','Mt Cloudesley','Mt Izard','Mt Cheeseman'].includes(L.e.firstChild.textContent));
+    else if(labelMode==='opt3') show=(L.group==='bail'||L.group==='esc'||L.e.firstChild.textContent.startsWith('Pickup')||['Mt Enys'].includes(L.e.firstChild.textContent));
     else if(labelMode==='near') show=(L.group==='peak'||L.group==='poi');
     else show=(L.group==='peak'||L.group==='poi'||L.group==='minor') && L.p.distanceTo(camP)<11000;
     if(show){ v.copy(L.p).project(cam); if(v.z>1||Math.abs(v.x)>1.05||Math.abs(v.y)>1.05) show=false; }
@@ -279,9 +344,10 @@ if(!REC){ seek.max=C.end; $('play').onclick=()=>{ if(aud.paused){aud.play();$('p
   (function loop(){ if(!aud.paused){ render(aud.currentTime); seek.value=aud.currentTime; $('tt').textContent=aud.currentTime.toFixed(1)+' s'; } requestAnimationFrame(loop); })();
 }
 render(0);
-function fit(){ const sc=Math.min(1, innerWidth/1280); const w=$('wrap'); w.style.transform='scale('+sc+')'; w.style.height=(720*sc)+'px'; w.style.width='1280px'; w.parentElement.style.height='auto'; }
+function fit(){ const sc=Math.min(1, innerWidth/1280); const w=$('wrap'); w.style.transform='scale('+sc+')'; w.style.height=(720*sc)+'px'; w.style.width='1280px'; }
 if(!REC){ addEventListener('resize',fit); fit(); document.body.style.overflowX='hidden'; document.body.style.overflowY='auto'; }
 aud.addEventListener('ended',()=>{$('play').textContent='▶ Play';});
+if(!REC){ const t2=()=>{ if(window.tex2Ready) render(lastT); else setTimeout(t2,200); }; t2(); }
 </script>
 </body>
 </html>

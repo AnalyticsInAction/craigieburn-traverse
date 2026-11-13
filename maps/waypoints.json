@@ -1,0 +1,152 @@
+[
+ {
+  "name": "Start - Ribbonwood Stream bridge (SH73)",
+  "lat": -43.08198,
+  "lon": 171.77383,
+  "kind": "start",
+  "note": "Day 1 start ~8:30 am",
+  "elev": 663,
+  "E": 1500189,
+  "N": 5229352
+ },
+ {
+  "name": "Baldy Hill 1834",
+  "lat": -43.08659,
+  "lon": 171.72962,
+  "kind": "peak",
+  "note": "Top of Ribbonwood Spur",
+  "elev": 1826,
+  "E": 1496598,
+  "N": 5228786
+ },
+ {
+  "name": "Hamilton Peak 1922",
+  "lat": -43.1133,
+  "lon": 171.6886,
+  "kind": "peak",
+  "note": "Planned lunch",
+  "elev": 1920,
+  "E": 1493306,
+  "N": 5225769
+ },
+ {
+  "name": "Mt Cockayne 1874",
+  "lat": -43.15125,
+  "lon": 171.66146,
+  "kind": "peak",
+  "note": "",
+  "elev": 1867,
+  "E": 1491165,
+  "N": 5221519
+ },
+ {
+  "name": "Mt Cheeseman 2031",
+  "lat": -43.16945,
+  "lon": 171.6433,
+  "kind": "peak",
+  "note": "",
+  "elev": 2018,
+  "E": 1489721,
+  "N": 5219474
+ },
+ {
+  "name": "Camp - tarns SW of Cheeseman",
+  "lat": -43.1762,
+  "lon": 171.6347,
+  "kind": "camp",
+  "note": "Planned camp ~1670 m (west side)",
+  "elev": 1671,
+  "E": 1489034,
+  "N": 5218713
+ },
+ {
+  "name": "Exit ridge crossing (sheltered line)",
+  "lat": -43.170255913818195,
+  "lon": 171.64386749267578,
+  "kind": "bail",
+  "note": "Cross here, drop well below crest on E side",
+  "elev": 2004,
+  "E": 1489769,
+  "N": 5219386
+ },
+ {
+  "name": "Lee camp / Mt Cheeseman ski basin",
+  "lat": -43.15461,
+  "lon": 171.6652,
+  "kind": "bail",
+  "note": "Sheltered from NW; ski-field road exit",
+  "elev": 1678,
+  "E": 1491475,
+  "N": 5221151
+ },
+ {
+  "name": "Cheeseman Rd at SH73",
+  "lat": -43.19694,
+  "lon": 171.73436,
+  "kind": "bail",
+  "note": "Bottom of ski-field road (~13 km road walk from basin)",
+  "elev": 648,
+  "E": 1497169,
+  "N": 5216537
+ },
+ {
+  "name": "Mt Izard 2019",
+  "lat": -43.18664,
+  "lon": 171.64197,
+  "kind": "peak",
+  "note": "",
+  "elev": 2013,
+  "E": 1489644,
+  "N": 5217564
+ },
+ {
+  "name": "Mt Cloudesley 2107 - Long Spur bail-out",
+  "lat": -43.20602,
+  "lon": 171.6424,
+  "kind": "bail",
+  "note": "Top of Long Spur (unmarked, not DOC-maintained)",
+  "elev": 2103,
+  "E": 1489714,
+  "N": 5215412
+ },
+ {
+  "name": "Long Spur at bushline",
+  "lat": -43.20051,
+  "lon": 171.6893,
+  "kind": "bail",
+  "note": "End of Long Spur ~920 m; ~4-5 km forest tracks to Castle Hill",
+  "elev": 918,
+  "E": 1493514,
+  "N": 5216085
+ },
+ {
+  "name": "Castle Hill Village",
+  "lat": -43.20848,
+  "lon": 171.71578,
+  "kind": "bail",
+  "note": "Bail-out destination",
+  "elev": 730,
+  "E": 1495679,
+  "N": 5215233
+ },
+ {
+  "name": "Mt Enys 2194",
+  "lat": -43.23356,
+  "lon": 171.63499,
+  "kind": "peak",
+  "note": "Highest point",
+  "elev": 2186,
+  "E": 1489162,
+  "N": 5212344
+ },
+ {
+  "name": "Pickup - Porters car park",
+  "lat": -43.27359,
+  "lon": 171.64291,
+  "kind": "end",
+  "note": "Day 2 finish ~1290 m",
+  "elev": 1292,
+  "E": 1489877,
+  "N": 5207909
+ }
+]
